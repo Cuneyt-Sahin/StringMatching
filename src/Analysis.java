@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Arrays;
 class Naive extends Solution {
     static {
         SUBCLASSES.add(Naive.class);
@@ -201,9 +203,64 @@ class BoyerMoore extends Solution {
 
     @Override
     public String Solve(String text, String pattern) {
-        // TODO: Students should implement Boyer-Moore algorithm here
-        throw new UnsupportedOperationException("Boyer-Moore algorithm not yet implemented - this is your homework!");
+        List<Integer> indices = new ArrayList<>();
+        int n = text.length();
+        int m = pattern.length();
+
+        //We handle edge cases here: empty pattern or pattern > text
+        if (m == 0) {
+            for (int i = 0; i <= n; i++) indices.add(i);
+            return indicesToString(indices);
+        }
+        if (m > n) return "";
+
+        //Here we determine table size ASCII or Unicode
+        int tableSize = 256;
+        for (int i = 0; i < m; i++) {
+            if (pattern.charAt(i) >= 256) {
+                tableSize = 65536;
+                break;
+            }
+        }
+
+
+        int[] badChar = new int[tableSize];
+        Arrays.fill(badChar, -1);
+
+
+        for (int i = 0; i < m; i++) {
+
+            badChar[pattern.charAt(i)] = i;
+        }
+
+        int s = 0;
+        //Here we loop until pattern goes beyond text length
+        while (s <= (n - m)) {
+            int j = m - 1;
+
+            while (j >= 0 && pattern.charAt(j) == text.charAt(s + j)) {
+                j--;
+            }
+
+            if (j < 0) {
+                indices.add(s);
+                if (s + m < n) {
+                    char nextChar = text.charAt(s + m);
+
+                    int shift = (nextChar < tableSize) ? badChar[nextChar] : -1;
+                    s += m - shift;
+                } else {
+                    s += 1;
+                }
+            } else {
+                char textChar = text.charAt(s + j);
+                int shift = (textChar < tableSize) ? badChar[textChar] : -1;
+                s += Math.max(1, j - shift);
+            }
+        }
+        return indicesToString(indices);
     }
+
 }
 
 /**
@@ -214,7 +271,7 @@ class BoyerMoore extends Solution {
 class GoCrazy extends Solution {
     static {
         SUBCLASSES.add(GoCrazy.class);
-        System.out.println("GoCrazy registered");
+        System.out.println("GoCrazy (Sunday Algorithm) registered");
     }
 
     public GoCrazy() {
@@ -222,9 +279,73 @@ class GoCrazy extends Solution {
 
     @Override
     public String Solve(String text, String pattern) {
-        // TODO: Students should implement their own creative algorithm here
-        throw new UnsupportedOperationException("GoCrazy algorithm not yet implemented - this is your homework!");
+        List<Integer> indices = new ArrayList<>();
+        int n = text.length();
+        int m = pattern.length();
+
+        //Here we handle edge cases
+        if (m == 0) {
+            for (int i = 0; i <= n; i++) indices.add(i);
+            return indicesToString(indices);
+        }
+        if (m > n) return "";
+
+        int[] asciiShifts = new int[256];
+        Arrays.fill(asciiShifts, m + 1);
+
+        //Here we use a map for Unicode characters to save memory
+        Map<Character, Integer> unicodeShifts = null;
+
+        //Here we calculate shift values
+        for (int i = 0; i < m; i++) {
+            char c = pattern.charAt(i);
+            int shift = m - i;
+
+            if (c < 256) {
+                asciiShifts[c] = shift;
+            } else {
+                if (unicodeShifts == null) unicodeShifts = new HashMap<>();
+                unicodeShifts.put(c, shift);
+            }
+        }
+
+        int s = 0;
+        while (s <= n - m) {
+            //Here we are checking for match
+            int j = 0;
+            while (j < m && text.charAt(s + j) == pattern.charAt(j)) {
+                j++;
+            }
+
+            //If full match found record index
+            if (j == m) {
+                indices.add(s);
+            }
+
+            // Sunday's Shift Logic: Check the character immediately AFTER the current window
+            if (s + m < n) {
+                char nextChar = text.charAt(s + m);
+                int jumpAmount;
+
+                // Determine shift amount based on that next character
+                if (nextChar < 256) {
+                    jumpAmount = asciiShifts[nextChar];
+                } else {
+                    if (unicodeShifts != null && unicodeShifts.containsKey(nextChar)) {
+                        jumpAmount = unicodeShifts.get(nextChar);
+                    } else {
+                        jumpAmount = m + 1; // Character not in pattern, jump past it
+                    }
+                }
+                s += jumpAmount;
+            } else {
+                s += 1; // End of text reached
+            }
+        }
+
+        return indicesToString(indices);
     }
 }
+
 
 

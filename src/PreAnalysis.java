@@ -51,13 +51,71 @@ class StudentPreAnalysis extends PreAnalysis {
         //
         // For now, this returns null which means "run all algorithms"
         // Students should replace this with their logic
-        
-        return null; // Return null to run all algorithms, or return algorithm name to use pre-analysis
+        int n = text.length();
+        int m = pattern.length();
+        if (m <=4) {
+            return "Naive";
+        }
+        if (isRepetitive(pattern)) {
+            return "KMP";
+        }
+        if (isSmallAlphabet(text)) {
+
+            return "KMP";
+        }
+
+
+
+        return "GoCrazy";
     }
-    
+
+    private boolean isRepetitive(String pattern) {
+        int m = pattern.length();
+        if (m < 5) return false;
+
+
+        int limit = Math.min(m, 8);
+        char first = pattern.charAt(0);
+        int count = 0;
+
+        for (int i = 0; i < limit; i++) {
+            if (pattern.charAt(i) == first) {
+                count++;
+            }
+        }
+
+        return count >= (limit * 0.75);
+    }
+
+    private boolean isSmallAlphabet(String text) {
+        int n = text.length();
+
+        int limit = Math.min(n, 64);
+
+        boolean[] seen = new boolean[128];
+        int uniqueCount = 0;
+
+        for (int i = 0; i < limit; i++) {
+            char c = text.charAt(i);
+
+            if (c >= 128) return false;
+
+            if (!seen[c]) {
+                seen[c] = true;
+                uniqueCount++;
+            }
+
+            if (uniqueCount > 5) {
+                return false;
+            }
+        }
+
+
+        return true;
+    }
     @Override
     public String getStrategyDescription() {
-        return "Default strategy - no pre-analysis implemented yet (students should implement this)";
+        return "I ensure that short patterns are solved with Naive, repetitive patterns or small-alphabet inputs with KMP, and everything else with GoCrazy.";
     }
 }
 
@@ -121,3 +179,4 @@ class InstructorPreAnalysis extends PreAnalysis {
         return "Instructor's testing implementation";
     }
 }
+
